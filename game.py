@@ -88,10 +88,10 @@ class Game:
     def isContinue(self):
         panelList = list(self.panel)
         return any(x == 0 for line in panelList for x in line) or any(
-                   box == panelList[x - 1][y] if x > 0 else False or box == panelList[x][y - 1] if y > 0 else False
-                   for x, line in enumerate(panelList)
-                   for y, box in enumerate(line)
-               )
+            box == panelList[x - 1][y] if x > 0 else False or box == panelList[x][y - 1] if y > 0 else False
+            for x, line in enumerate(panelList)
+            for y, box in enumerate(line)
+        )
 
     def newBlock(self):
         indexs = np.where(self.panel == 0)
