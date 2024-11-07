@@ -104,7 +104,7 @@ class Game:
 
     def print(self):
         print("-" * 100)
-        print(game.panel)
+        print(self.panel)
         return self
 
     def getPanel(self):

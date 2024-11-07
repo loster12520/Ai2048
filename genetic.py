@@ -37,14 +37,28 @@ def randomNumber(times: int = 32) -> list[int]:
     return [0 if random.random() > 0.5 else 1 for _ in range(times + 2)]
 
 
-def initParameters(shape: list[int], times: int = 32) -> Generator[Tuple[list[list[list[int]]],list[int]],None,None]:
-    return (
-        ([[randomNumber(times) for _ in range(shape[index + 1])]
-         for _ in range(value)], randomNumber(times))
-        for index, value in enumerate(shape[:-1])
-    )
+def initParameter(shape: list[int], times: int = 32) -> list[Tuple[list[list[list[int]]], list[list[int]]]]:
+    return [
+        (
+            [[randomNumber(times) for _ in range(shape[index + 1])] for _ in range(value)],
+            [randomNumber(times) for _ in range(shape[index + 1])]
+        )
+            for index, value in enumerate(shape[:-1])
+    ]
 
 
-if __name__ == "__main__":
-    times = 32
-    shape = [16, 20, 30, 50, 40, 25, 10, 4]
+def roulette_selection(weights):
+    # 生成一个随机浮点数
+    random_num = np.random.rand() * np.sum(weights)
+
+    # 使用二分查找找到所属的区间
+    left, right = 0, len(weights) - 1
+    while left <= right:
+        mid = (left + right) // 2
+        if weights[mid] >= random_num:
+            right = mid - 1
+        else:
+            left = mid + 1
+
+    # 根据找到的区间返回对应的索引
+    return left
