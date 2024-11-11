@@ -1,20 +1,16 @@
-from game import Game
-from genetic import initParameter
-from neural import forward
+from genetic import initParameters, select, intersect, variable, predictParameters
 
 if __name__ == '__main__':
     shape = [16, 20, 30, 50, 40, 25, 10, 4]
-    parameter = initParameter(shape)
-    game = Game((4, 4))
-    while game.isContinue():
-        direct = forward(game.getPanel(), parameter, shape)
-        if direct == 0:
-            game.move("left")
-        elif direct == 1:
-            game.move("right")
-        elif direct == 2:
-            game.move("up")
-        elif direct == 3:
-            game.move("down")
-        game.print()
-    print(f"score = {game.score}\nstep = {game.step}")
+    weights = initParameters(shape)
+    print("init successful")
+    for i in range(1):
+        weights = select(shape, weights)
+        print("select successful")
+        weights = intersect(weights)
+        print("intersect successful")
+        weights = variable(weights)
+        print("variable successful")
+        print(len(weights))
+        evaluate = evaluate(shape, weights)
+        print(evaluate['loss'], evaluate['score'], evaluate['step'])
