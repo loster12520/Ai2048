@@ -11,7 +11,7 @@ def relu(X: np.ndarray) -> np.ndarray:
     return np.maximum(X / 100, X)
 
 
-def prev(A_prev: np.matrix[float], W: np.matrix[float], b: np.matrix[float], activate: str) -> np.ndarray:
+def prev(A_prev: np.ndarray[float], W: np.ndarray[float], b: np.ndarray[float], activate: str) -> np.ndarray:
     Z = np.dot(A_prev, W) + b
     if activate == 'sigmoid':
         A = sigmoid(Z)

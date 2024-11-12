@@ -3,6 +3,8 @@ import random
 from game import Game
 from neural import forward
 
+from concurrent.futures import ThreadPoolExecutor
+
 
 def randomNumber(times: int = 32) -> list[int]:
     return [0 if random.random() > 0.5 else 1 for _ in range(times + 2)]
@@ -22,9 +24,9 @@ def initParameters(shape: list[int], times: int = 32) -> list[list[tuple[list[li
     return [initParameter(shape, times) for _ in range(100)]
 
 
-def predict(shape: list[int], parameter: list[tuple[list[list[list[int]]], list[list[int]]]]) -> (int, (int, int)):
+def predict(shape: list[int], parameter: list[tuple[list[list[list[int]]], list[list[int]]]]) -> (
+        int, (int, int), list[tuple[list[list[list[int]]], list[list[int]]]]):
     game = Game((4, 4))
-    count = 0
     while game.isContinue():
         direct = forward(game.getPanel(), parameter, shape)
         if direct == 0:
@@ -47,43 +49,55 @@ def predict(shape: list[int], parameter: list[tuple[list[list[list[int]]], list[
             elif direct == 3:
                 game.move("down")
             # game.print()
-        count += 1
-        if count > 2:
-            break
-    # print(f"score = {game.score}\tstep = {game.step}\n", "-" * 100)
-    return game.score / game.step, (game.score, game.step)
+    # print(f"score = {game.score}\t step = {game.step}\n", "-" * 100)
+    return game.score, (game.score, game.step), parameter
 
 
-def predictParameters(shape: list[int], parameters: list[list[tuple[list[list[list[int]]], list[list[int]]]]]) -> list[
-    (int, (int, int))]:
-    return [predict(shape, parameter) for parameter in parameters]
+def predictMore(shape: list[int], parameter: list[tuple[list[list[list[int]]], list[list[int]]]], times: int = 5):
+    with ThreadPoolExecutor() as executor:
+        predictList = list(executor.map(lambda x: predict(shape, parameter), range(times)))
+    loss, score, step = 0, 0, 0
+    for i in predictList:
+        loss += i[0]
+        score += i[1][0]
+        step += i[1][1]
+    loss, score, step = loss / times, score / times, step / times
+    return score, (score, step), parameter
+
+
+def predictParameter(shape: list[int], parameter: list[list[tuple[list[list[list[int]]], list[list[int]]]]]):
+    with ThreadPoolExecutor() as executor:
+        return list(executor.map(lambda x: predict(x[0], x[1]), [(shape, w) for w in parameter]))
 
 
 def evaluate(shape: list[int], parameters: list[list[tuple[list[list[list[int]]], list[list[int]]]]]) -> {str: float}:
-    loss, score, step = 0
+    loss, score, step = 0, 0, 0
     n = len(parameters)
-    for i in parameters:
+    for i in predictParameter(shape, parameters):
         loss += i[0]
         score += i[1][0]
         step += i[1][1]
     return {"loss": loss / n, "score": score / n, "step": step / n}
 
 
-def select(shape: list[int], weights: list[list[tuple[list[list[list[int]]]], list[list[int]]]]) -> list[
+def select(shape: list[int], weights: list[list[tuple[list[list[list[int]]], list[list[int]]]]]) -> list[
     list[tuple[list[list[list[int]]], list[list[int]]]]]:
-    return sorted(weights, key=lambda x: predict(shape, x))[0][:9] + [random.choice(weights)]
+    with ThreadPoolExecutor(max_workers=100) as executor:
+        predictParas = list(executor.map(lambda x: predictMore(x[0], x[1]), [(shape, w) for w in weights]))
+    return [i[2] for i in sorted(predictParas, key=lambda x: x[0])[-7:]] + [random.choice(weights),
+                                                                            initParameter(shape), initParameter(shape)]
 
 
 def intersectWeight(numberA: list[int], numberB: list[int]) -> list[int]:
     return [a if random.random() > 0.5 else b for a, b in zip(numberA, numberB)]
 
 
-def intersect(weights: list[list[tuple[list[list[list[int]]]], list[list[int]]]]) -> list[
+def intersect(weights: list[list[tuple[list[list[list[int]]], list[list[int]]]]]) -> list[
     list[tuple[list[list[list[int]]], list[list[int]]]]]:
     return weights + [[(
-        [[intersectWeight(a, b) for a, b in zip(a, b)] for a, b in zip(a[0], b[0])],
-        [intersectWeight(a, b) for a, b in zip(a[1], b[1])]
-    ) for a, b in zip(a, b)] for a, b in zip(weights, weights[::-1])]
+        [[intersectWeight(a31, b31) for a31, b31 in zip(a21, b21)] for a21, b21 in zip(a1[0], b1[0])],
+        [intersectWeight(a22, b22) for a22, b22 in zip(a1[1], b1[1])]
+    ) for a1, b1 in zip(a0, b0)] for a0, b0 in zip(weights, weights[::-1])]
 
 
 def variableOne(i: int) -> int:
@@ -94,9 +108,9 @@ def variableWeight(number: list[int]) -> list[int]:
     return [i if i > 0.01 else variableOne(i) for i in number]
 
 
-def variable(weights: list[list[tuple[list[list[list[int]]]], list[list[int]]]]) -> list[
+def variable(weights: list[list[tuple[list[list[list[int]]], list[list[int]]]]]) -> list[
     list[tuple[list[list[list[int]]], list[list[int]]]]]:
     return weights + [[(
-        [[variableWeight(i) for i in i] for i in i[0]],
-        [variableWeight(i) for i in i[1]]
-    ) for i in i] for i in weights] * 4
+        [[variableWeight(i) for i in i] for i in t[0]],
+        [variableWeight(i) for i in t[1]]
+    ) for t in i] for i in weights] * 4
