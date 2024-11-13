@@ -11,11 +11,12 @@ if __name__ == '__main__':
         print(f"start the {i} round of training")
         start_time = time.time()
         weights = select(shape, weights)
-        print(f"select successful in {time.time() - start_time} seconds")
+        if i < 5:
+            print(f"select successful in {time.time() - start_time} seconds")
         weights = intersect(weights)
-        print("intersect successful")
+        # print("intersect successful")
         weights = variable(weights)
-        print("variable successful")
+        # print("variable successful")
         if i % 10 == 0:
             evaluateRes = evaluate(shape, weights)
             print(

@@ -67,7 +67,7 @@ def predictMore(shape: list[int], parameter: list[tuple[list[list[list[int]]], l
 
 def predictParameter(shape: list[int], parameter: list[list[tuple[list[list[list[int]]], list[list[int]]]]]):
     with ThreadPoolExecutor() as executor:
-        return list(executor.map(lambda x: predict(x[0], x[1]), [(shape, w) for w in parameter]))
+        return list(executor.map(lambda x: predictMore(x[0], x[1]), [(shape, w) for w in parameter]))
 
 
 def evaluate(shape: list[int], parameters: list[list[tuple[list[list[list[int]]], list[list[int]]]]]) -> {str: float}:
@@ -84,8 +84,8 @@ def select(shape: list[int], weights: list[list[tuple[list[list[list[int]]], lis
     list[tuple[list[list[list[int]]], list[list[int]]]]]:
     with ThreadPoolExecutor(max_workers=100) as executor:
         predictParas = list(executor.map(lambda x: predictMore(x[0], x[1]), [(shape, w) for w in weights]))
-    return [i[2] for i in sorted(predictParas, key=lambda x: x[0])[-7:]] + [random.choice(weights),
-                                                                            initParameter(shape), initParameter(shape)]
+    return [i[2] for i in sorted(predictParas, key=lambda x: x[0])[-8:]] + [random.choice(weights),
+                                                                            initParameter(shape)]
 
 
 def intersectWeight(numberA: list[int], numberB: list[int]) -> list[int]:

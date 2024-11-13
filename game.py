@@ -23,7 +23,7 @@ class Game:
                     elif len(queue) == 0:
                         queue.append(item)
                     elif item == queue[-1]:
-                        queue[-1] = item * 2
+                        queue[-1] *= 2
                     else:
                         queue.append(item)
                 self.panel[column] = np.pad(np.array(queue), (0, self.shape[1] - len(queue)), mode='constant',

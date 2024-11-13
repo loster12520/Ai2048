@@ -17,6 +17,8 @@ def prev(A_prev: np.ndarray[float], W: np.ndarray[float], b: np.ndarray[float], 
         A = sigmoid(Z)
     elif activate == 'relu':
         A = relu(Z)
+    else:
+        A = Z
     return A
 
 
