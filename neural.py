@@ -1,6 +1,8 @@
+from random import random
 from typing import Tuple
 
 import numpy as np
+from numpy import ndarray
 
 
 def sigmoid(X: np.ndarray) -> np.ndarray:
@@ -11,29 +13,25 @@ def relu(X: np.ndarray) -> np.ndarray:
     return np.maximum(X / 100, X)
 
 
-def prev(A_prev: np.ndarray[float], W: np.ndarray[float], b: np.ndarray[float], activate: str) -> np.ndarray:
+def prev(A_prev: np.ndarray, W: np.ndarray, b: np.ndarray, activate: str) -> np.ndarray:
     Z = np.dot(A_prev, W) + b
-    if activate == 'sigmoid':
-        A = sigmoid(Z)
-    elif activate == 'relu':
+    if activate == 'relu':
         A = relu(Z)
+    elif activate == 'sigmoid':
+        A = sigmoid(Z)
     else:
         A = Z
     return A
 
 
-def forward(X: np.ndarray, parameters: list[Tuple[list[list[list[int]]], list[list[int]]]], shape: list[int]) -> int:
+def forward(X: np.ndarray, parameters: list[Tuple[ndarray, ndarray]], shape: list[int]) -> int:
     A = np.array(X)
     A = A.reshape(1, -1)
     L = len(shape)
     for i in range(L - 2):
         W, b = parameters[i]
-        W = np.array([[uncoding(item) for item in col] for col in W])
-        b = np.array([uncoding(item) for item in b])
         A = prev(A, W, b, activate='relu')
     W, b = parameters[L - 2]
-    W = np.array([[uncoding(item) for item in col] for col in W])
-    b = np.array([uncoding(item) for item in b])
     AL = prev(A, W, b, activate='sigmoid')
     res = roulette_selection(AL)
     return res
@@ -68,9 +66,16 @@ def uncoding(codingList: list[int], times: int = 32) -> float:
         -1 if codingList[1] == 1 else 1)
 
 
-def roulette_selection(weights):
-    random_num = np.random.rand() * np.sum(weights)
+def uncodingParameter(parameters: list[Tuple[list[list[list[int]]], list[list[int]]]]) -> list[Tuple[ndarray, ndarray]]:
+    return [(np.array([[uncoding(item) for item in col] for col in W]), np.array([uncoding(item) for item in b])) for
+            W, b in parameters]
 
+
+def roulette_selection(weights):
+    counter = 0
+    for i in weights[0]:
+        counter += i
+    random_num = random() * counter
     count = 0
     for index, value in enumerate(weights[0]):
         if (value + count) > random_num:

@@ -8,7 +8,6 @@ class Game:
         self.shape = shape
         self.step = 0
         self.panel = np.zeros(shape, dtype=int)
-        self.score = 0
         self.lastPanel = self.panel.copy()
         self.newBlock()
 
@@ -26,12 +25,11 @@ class Game:
                         queue[-1] *= 2
                     else:
                         queue.append(item)
-                self.panel[column] = np.pad(np.array(queue), (0, self.shape[1] - len(queue)), mode='constant',
-                                            constant_values=0)
+                self.panel[column] = np.array(queue + [0 for _ in range(self.shape[1] - len(queue))])
         elif direction == "right":
             for column in range(self.shape[0]):
                 queue = []
-                for item in np.flip(self.panel[column]):
+                for item in self.panel[column][::-1]:
                     if item == 0:
                         continue
                     elif len(queue) == 0:
@@ -40,8 +38,7 @@ class Game:
                         queue[0] = item * 2
                     else:
                         queue.insert(0, item)
-                self.panel[column] = np.pad(np.array(queue), (self.shape[1] - len(queue), 0), mode='constant',
-                                            constant_values=0)
+                self.panel[column] = np.array([0 for _ in range(self.shape[1] - len(queue))] + queue)
         elif direction == "up":
             self.panel = self.panel.T
             for column in range(self.shape[0]):
@@ -55,14 +52,13 @@ class Game:
                         queue[-1] = item * 2
                     else:
                         queue.append(item)
-                self.panel[column] = np.pad(np.array(queue), (0, self.shape[1] - len(queue)), mode='constant',
-                                            constant_values=0)
+                self.panel[column] = np.array(queue + [0 for _ in range(self.shape[1] - len(queue))])
             self.panel = self.panel.T
         elif direction == "down":
             self.panel = self.panel.T
             for column in range(self.shape[0]):
                 queue = []
-                for item in np.flip(self.panel[column]):
+                for item in self.panel[column][::-1]:
                     if item == 0:
                         continue
                     elif len(queue) == 0:
@@ -71,15 +67,15 @@ class Game:
                         queue[0] = item * 2
                     else:
                         queue.insert(0, item)
-                self.panel[column] = np.pad(np.array(queue), (self.shape[1] - len(queue), 0), mode='constant',
-                                            constant_values=0)
+                self.panel[column] = np.array([0 for _ in range(self.shape[1] - len(queue))] + queue)
             self.panel = self.panel.T
 
         self.step += 1
-        self.score = np.sum(self.panel)
 
         if self.isContinue():
-            if not np.array_equal(self.panel, self.lastPanel):
+            if self.panelEqual():
+            #     pass
+            # if not np.array_equal(self.panel, self.lastPanel):
                 self.newBlock()
             return self
         else:
@@ -109,6 +105,16 @@ class Game:
 
     def getPanel(self):
         return self.panel.flatten()
+
+    def getScore(self):
+        return np.sum(self.panel)
+
+    def panelEqual(self):
+        for i in range(self.shape[0]):
+            for j in range(self.shape[1]):
+                if self.panel[i][j] != self.lastPanel[i][j]:
+                    return True
+        return False
 
 
 if __name__ == "__main__":

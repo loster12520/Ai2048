@@ -1,7 +1,7 @@
 import random
 
 from game import Game
-from neural import forward
+from neural import forward, uncodingParameter
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -27,8 +27,9 @@ def initParameters(shape: list[int], times: int = 32) -> list[list[tuple[list[li
 def predict(shape: list[int], parameter: list[tuple[list[list[list[int]]], list[list[int]]]]) -> (
         int, (int, int), list[tuple[list[list[list[int]]], list[list[int]]]]):
     game = Game((4, 4))
+    uncodingPara = uncodingParameter(parameter)
     while game.isContinue():
-        direct = forward(game.getPanel(), parameter, shape)
+        direct = forward(game.getPanel(), uncodingPara, shape)
         if direct == 0:
             game.move("left")
         elif direct == 1:
@@ -50,7 +51,7 @@ def predict(shape: list[int], parameter: list[tuple[list[list[list[int]]], list[
                 game.move("down")
             # game.print()
     # print(f"score = {game.score}\t step = {game.step}\n", "-" * 100)
-    return game.score, (game.score, game.step), parameter
+    return game.getScore(), (game.getScore(), game.step), parameter
 
 
 def predictMore(shape: list[int], parameter: list[tuple[list[list[list[int]]], list[list[int]]]], times: int = 5):
