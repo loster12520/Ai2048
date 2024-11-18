@@ -1,9 +1,8 @@
 import random
+from multiprocessing import cpu_count, Pool
 
 from game import Game
 from neural import forward, uncodingParameter
-
-from concurrent.futures import ThreadPoolExecutor
 
 
 def randomNumber(times: int = 32) -> list[int]:
@@ -20,8 +19,9 @@ def initParameter(shape: list[int], times: int = 32) -> list[tuple[list[list[lis
     ]
 
 
-def initParameters(shape: list[int], times: int = 32) -> list[list[tuple[list[list[list[int]]], list[list[int]]]]]:
-    return [initParameter(shape, times) for _ in range(100)]
+def initParameters(shape: list[int], times: int = 32, number: int = 10000) -> list[
+    list[tuple[list[list[list[int]]], list[list[int]]]]]:
+    return [initParameter(shape, times) for _ in range(number)]
 
 
 def predict(shape: list[int], parameter: list[tuple[list[list[list[int]]], list[list[int]]]]) -> (
@@ -51,24 +51,27 @@ def predict(shape: list[int], parameter: list[tuple[list[list[list[int]]], list[
                 game.move("down")
             # game.print()
     # print(f"score = {game.score}\t step = {game.step}\n", "-" * 100)
-    return game.getScore(), (game.getScore(), game.step), parameter
+    return game.step, (game.getScore(), game.step), parameter
 
 
 def predictMore(shape: list[int], parameter: list[tuple[list[list[list[int]]], list[list[int]]]], times: int = 5):
-    with ThreadPoolExecutor() as executor:
-        predictList = list(executor.map(lambda x: predict(shape, parameter), range(times)))
+    predictList = [predict(shape, parameter) for _ in range(times)]
     loss, score, step = 0, 0, 0
     for i in predictList:
         loss += i[0]
         score += i[1][0]
         step += i[1][1]
     loss, score, step = loss / times, score / times, step / times
-    return score, (score, step), parameter
+    return loss, (score, step), parameter
+
+
+def predictMoreForPool(para):
+    return predictMore(para[0], para[1])
 
 
 def predictParameter(shape: list[int], parameter: list[list[tuple[list[list[list[int]]], list[list[int]]]]]):
-    with ThreadPoolExecutor() as executor:
-        return list(executor.map(lambda x: predictMore(x[0], x[1]), [(shape, w) for w in parameter]))
+    with Pool(processes=cpu_count()) as pool:
+        return pool.map(predictMoreForPool, [(shape, w) for w in parameter])
 
 
 def evaluate(shape: list[int], parameters: list[list[tuple[list[list[list[int]]], list[list[int]]]]]) -> {str: float}:
@@ -83,10 +86,10 @@ def evaluate(shape: list[int], parameters: list[list[tuple[list[list[list[int]]]
 
 def select(shape: list[int], weights: list[list[tuple[list[list[list[int]]], list[list[int]]]]]) -> list[
     list[tuple[list[list[list[int]]], list[list[int]]]]]:
-    with ThreadPoolExecutor(max_workers=100) as executor:
-        predictParas = list(executor.map(lambda x: predictMore(x[0], x[1]), [(shape, w) for w in weights]))
-    return [i[2] for i in sorted(predictParas, key=lambda x: x[0])[-8:]] + [random.choice(weights),
-                                                                            initParameter(shape)]
+    with Pool(processes=cpu_count()) as pool:
+        predictParas = pool.map(predictMoreForPool, [(shape, w) for w in weights])
+    return [i[2] for i in sorted(predictParas, key=lambda x: x[0])[-28:]] + [random.choice(weights),
+                                                                             initParameter(shape)]
 
 
 def intersectWeight(numberA: list[int], numberB: list[int]) -> list[int]:
@@ -98,7 +101,7 @@ def intersect(weights: list[list[tuple[list[list[list[int]]], list[list[int]]]]]
     return weights + [[(
         [[intersectWeight(a31, b31) for a31, b31 in zip(a21, b21)] for a21, b21 in zip(a1[0], b1[0])],
         [intersectWeight(a22, b22) for a22, b22 in zip(a1[1], b1[1])]
-    ) for a1, b1 in zip(a0, b0)] for a0, b0 in zip(weights, weights[::-1])]
+    ) for a1, b1 in zip(a0, b0)] for a0 in weights for b0 in weights]
 
 
 def variableOne(i: int) -> int:
@@ -109,9 +112,9 @@ def variableWeight(number: list[int]) -> list[int]:
     return [i if i > 0.01 else variableOne(i) for i in number]
 
 
-def variable(weights: list[list[tuple[list[list[list[int]]], list[list[int]]]]]) -> list[
+def variable(weights: list[list[tuple[list[list[list[int]]], list[list[int]]]]], number: int = 10000) -> list[
     list[tuple[list[list[list[int]]], list[list[int]]]]]:
     return weights + [[(
         [[variableWeight(i) for i in i] for i in t[0]],
         [variableWeight(i) for i in t[1]]
-    ) for t in i] for i in weights] * 4
+    ) for t in random.choice(weights)] for _ in range(number - len(weights))]

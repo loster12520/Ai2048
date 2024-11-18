@@ -6,7 +6,7 @@ from line_profiler import LineProfiler
 
 
 def train(shape, weights):
-    for i in range(10000):
+    for i in range(10):
         print(f"start the {i} round of training")
         if i < 5:
             startTime = time.time()
@@ -15,7 +15,7 @@ def train(shape, weights):
             print(f"select successful in ${time.time() - startTime} seconds")
         weights = intersect(weights)
         weights = variable(weights)
-        if i % 10 == 0:
+        if i % 1 == 0:
             evaluateRes = evaluate(shape, weights)
             print(
                 f"{i}次效果如下: loss = {evaluateRes['loss']}, score = {evaluateRes['score']}, step = {evaluateRes['step']}")
@@ -33,7 +33,7 @@ def start():
 
 
 def continueTrain():
-    shape = [16, 20, 10, 4]
+    shape = [16, 10, 6, 4]
     weights = initParameters(shape)
     with open(f"output/lastest.pkl", "rb") as file:
         weights = pickle.load(file)
@@ -41,9 +41,11 @@ def continueTrain():
 
 
 if __name__ == '__main__':
-    continueTrain()
+    start()
+
+    # continueTrain()
 
     # profiler = LineProfiler()
-    # profiler.add_function(start)
+    # profiler.add_function(select)
     # profiler.run('start()')
     # profiler.print_stats()
