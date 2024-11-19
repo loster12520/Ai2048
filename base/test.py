@@ -1,7 +1,7 @@
 from line_profiler import LineProfiler
 
 import game
-from genetic import predict, initParameter, predictMore
+from genetic import predict
 from neural import forward, prev, roulette_selection
 
 if __name__ == '__main__':

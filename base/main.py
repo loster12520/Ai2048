@@ -2,7 +2,6 @@ import pickle
 import time
 
 from genetic import initParameters, select, intersect, variable, evaluate
-from line_profiler import LineProfiler
 
 
 def train(shape, weights):
